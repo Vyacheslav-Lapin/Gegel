@@ -33,7 +33,7 @@ public interface ExceptionalVarConsumer<T, E extends Exception> extends VarConsu
         return () -> exceptionalVarConsumer.accept(params);
     }
 
-    static <T, E extends Exception> Runnable supplyUnchacked(ExceptionalVarConsumer<T, E> exceptionalVarConsumer,
+    static <T, E extends Exception> Runnable supplyUnchecked(ExceptionalVarConsumer<T, E> exceptionalVarConsumer,
                                                              T... params) {
         return supply(exceptionalVarConsumer, params);
     }

@@ -61,7 +61,7 @@ public interface JdbcDao<D extends JdbcDao<D>> extends Supplier<Connection> {
         };
     }
 
-    default ExceptionalRunnable<SQLException> connectionPeeker(
+    default ExceptionalRunnable<SQLException> connectionPicker(
             ExceptionalConsumer<Connection, SQLException> connectionMapper) {
         return () -> {
             try (final Connection connection = get()) {
@@ -79,9 +79,9 @@ public interface JdbcDao<D extends JdbcDao<D>> extends Supplier<Connection> {
         });
     }
 
-    default ExceptionalRunnable<SQLException> statementPeeker(
+    default ExceptionalRunnable<SQLException> statementPicker(
             ExceptionalConsumer<Statement, SQLException> statementMapper) {
-        return connectionPeeker(connection -> {
+        return connectionPicker(connection -> {
             try (final Statement statement = connection.createStatement()) {
                 statementMapper.put(statement);
             }
@@ -89,7 +89,7 @@ public interface JdbcDao<D extends JdbcDao<D>> extends Supplier<Connection> {
     }
 
     default D executeScripts(Path... sqlFilePaths) {
-        statementPeeker(statement -> {
+        statementPicker(statement -> {
             Arrays.stream(sqlFilePaths)
                     .map(ExceptionalFunction.toUncheckedFunction(Files::readAllBytes))
                     .map(String::new)
@@ -112,10 +112,10 @@ public interface JdbcDao<D extends JdbcDao<D>> extends Supplier<Connection> {
         });
     }
 
-    default ExceptionalRunnable<SQLException> resultSetPeeker(
+    default ExceptionalRunnable<SQLException> resultSetPicker(
             String sql,
             ExceptionalConsumer<ResultSet, SQLException> resultSetMapper) {
-        return statementPeeker(statement -> {
+        return statementPicker(statement -> {
             try (final ResultSet rs = statement.executeQuery(sql)) {
                 resultSetMapper.put(rs);
             }
@@ -133,19 +133,19 @@ public interface JdbcDao<D extends JdbcDao<D>> extends Supplier<Connection> {
                 resultSet -> resultSet.next() ? Optional.of(rowMapper.map(resultSet)) : Optional.empty());
     }
 
-    default ExceptionalRunnable<SQLException> rowPeeker(String sql, ExceptionalConsumer<ResultSet, SQLException> rowPeeker) {
-        return resultSetPeeker(sql, resultSet -> {
+    default ExceptionalRunnable<SQLException> rowPicker(String sql, ExceptionalConsumer<ResultSet, SQLException> rowPicker) {
+        return resultSetPicker(sql, resultSet -> {
             if (resultSet.next())
-                rowPeeker.put(resultSet);
+                rowPicker.put(resultSet);
         });
     }
 
-    default ExceptionalRunnable<SQLException> rowsPeeker(
+    default ExceptionalRunnable<SQLException> rowsPicker(
             String sql,
-            ExceptionalConsumer<ResultSet, SQLException> rowPeeker) {
-        return resultSetPeeker(sql, resultSet -> {
+            ExceptionalConsumer<ResultSet, SQLException> rowPicker) {
+        return resultSetPicker(sql, resultSet -> {
             while (resultSet.next())
-                rowPeeker.put(resultSet);
+                rowPicker.put(resultSet);
         });
     }
 
@@ -153,7 +153,7 @@ public interface JdbcDao<D extends JdbcDao<D>> extends Supplier<Connection> {
             String sql,
             ExceptionalFunction<ResultSet, T, SQLException> rowMapper,
             Consumer<T> reducer) {
-        return rowsPeeker(sql, resultSet -> reducer.accept(rowMapper.map(resultSet)));
+        return rowsPicker(sql, resultSet -> reducer.accept(rowMapper.map(resultSet)));
     }
 
     default <T, C extends Collection<T>> Exceptional<C, SQLException> collect(

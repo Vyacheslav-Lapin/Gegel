@@ -20,7 +20,7 @@ public interface ExceptionalFunction<T, R, E extends Exception> extends Function
         return () -> exceptionalFunction.map(param);
     }
 
-    static <T, R, E extends Exception> Supplier<R> carryUnchacked(ExceptionalFunction<T, R, E> exceptionalFunction,
+    static <T, R, E extends Exception> Supplier<R> carryUnchecked(ExceptionalFunction<T, R, E> exceptionalFunction,
                                                                   T param) {
         return carry(exceptionalFunction, param)::getOrThrowUnchecked;
     }
